@@ -56,7 +56,7 @@ exports.start = function(stompUrl) {
 
           client.send("/fx/prices", {priority: 9}, JSON.stringify(data))
         }
-      }, 5000)
+      }, 500);
   }, function() {
     util.log('Error starting Fake FX data service', arguments)
   })

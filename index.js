@@ -32,6 +32,7 @@ function connectCallback() {
   //Create a HTML Table element.
   var table = document.createElement("TABLE");
   table.border = "1";
+  var sparkLineData = [];
 
   //Get the count of columns.
   var columnCount = currencyPairTableHeader[0].length;
@@ -44,31 +45,43 @@ function connectCallback() {
       row.appendChild(headerCell);
   }
 
-  //Add the data rows.
-  function addNewRow(data) {
-    row = table.insertRow(-1);
-    for (var j = 0; j < columnCount; j++) {
-        var cell = row.insertCell(-1);
-        cell.innerHTML = data[j];
+  setInterval(function() {
+    for (var j = 0; j < currencyPairTable.length; j++) {
+      var midPrice = (currencyPairTable[j].bestBid + currencyPairTable[j].bestAsk) / 2;
+      sparkLineData[j].push(midPrice);
+
     }
+  }, 1000);
+
+  //Add the data rows.
+  function addUpdateRow(data, index) {
+    if (index !== -1) {
+      table.deleteRow(index);
+    }
+    row = table.insertRow(index);
+    Object.keys(data).forEach(function(k){
+        var cell = row.insertCell(-1);
+        cell.innerHTML = data[k];
+    });
   }
 
   function ifDataExist(data) {
     var addData = true;
+    console.log(data);
     for (var j = 0; j < currencyPairTable.length; j++) {
-      console.log(data[0], currencyPairTable[j].name)
-      if (data[0] == currencyPairTable[j].name) {
+      console.log(data.name, currencyPairTable[j].name);
+      if (data.name == currencyPairTable[j].name) {
         addData = false;
+        addUpdateRow(data, j+1);
         break;
       }
     }
-    console.log("===reached=====", addData);
     if (addData) {
-      addNewRow(data);
+      currencyPairTable.push(data);
+      sparkLineData.push([]);
+      addUpdateRow(data, -1);
     }
   }
-
-
   var dvTable = document.getElementById("data-table");
   dvTable.innerHTML = "";
   dvTable.appendChild(table);
@@ -76,17 +89,13 @@ function connectCallback() {
 
   client.subscribe('/fx/prices', function(data) {
     var message = JSON.parse(data.body);
-    var data = [
-        message.name,
-        message.bestBid,
-        message.bestAsk,
-        message.lastChangeBid,
-        message.lastChangeAsk
-    ];
-    var dataT = {
-      name: message.name
+    var data = {
+      name: message.name,
+      bestBid: message.bestBid,
+      bestAsk: message.bestAsk,
+      lastChangedBid: message.lastChangeBid,
+      lastChangeAsk: message.lastChangeAsk,
     };
-    currencyPairTable.push(dataT);
     ifDataExist(data);
   });
   document.getElementById('stomp-status').innerHTML = "It has now successfully connected to a stomp server serving price updates for some foreign exchange currency pairs."
@@ -94,7 +103,4 @@ function connectCallback() {
 
 client.connect({}, connectCallback, function(error) {
   alert(error.headers.message)
-})
-
-const exampleSparkline = document.getElementById('example-sparkline')
-Sparkline.draw(exampleSparkline, [1, 2, 3, 6, 8, 20, 2, 2, 4, 2, 3])
+});
