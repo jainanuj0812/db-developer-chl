@@ -28,7 +28,7 @@ function connectCallback() {
   var currencyPairTable = new Array();
   var currencyPairTableHeader = new Array();
 
-  currencyPairTableHeader.push(["Name", "Best Bid", "Best Ask Price", "Best Bid Last Changed", "Best Ask Price Last Changed"]);
+  currencyPairTableHeader.push(["Name", "Best Bid", "Best Ask Price", "Best Bid Last Changed", "Best Ask Price Last Changed", "Updates"]);
   //Create a HTML Table element.
   var table = document.createElement("TABLE");
   table.border = "1";
@@ -49,27 +49,34 @@ function connectCallback() {
     for (var j = 0; j < currencyPairTable.length; j++) {
       var midPrice = (currencyPairTable[j].bestBid + currencyPairTable[j].bestAsk) / 2;
       sparkLineData[j].push(midPrice);
-
+      console.log(sparkLineData[j]);
+      var rowr = table.getElementsByTagName('tr')[j+1];
+      if (rowr.getElementsByTagName('td')[currencyPairTableHeader[0].length-1]) {
+        rowr.deleteCell(currencyPairTableHeader[0].length-1);
+      }
+      var cell = rowr.insertCell(currencyPairTableHeader[0].length-1);
+      Sparkline.draw(cell, sparkLineData[j]);
     }
-  }, 1000);
+  }, 30000);
 
   //Add the data rows.
   function addUpdateRow(data, index) {
     if (index !== -1) {
       table.deleteRow(index);
+      currencyPairTable[index-1] = data;
     }
     row = table.insertRow(index);
     Object.keys(data).forEach(function(k){
         var cell = row.insertCell(-1);
         cell.innerHTML = data[k];
     });
+    var sparkCell = row.insertCell(-1);
+    Sparkline.draw(sparkCell, sparkLineData[index-1]);
   }
 
   function ifDataExist(data) {
     var addData = true;
-    console.log(data);
     for (var j = 0; j < currencyPairTable.length; j++) {
-      console.log(data.name, currencyPairTable[j].name);
       if (data.name == currencyPairTable[j].name) {
         addData = false;
         addUpdateRow(data, j+1);
