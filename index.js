@@ -25,45 +25,41 @@ client.debug = function(msg) {
 }
 
 function connectCallback() {
-  var currencyPairTable = new Array();
-  var currencyPairTableHeader = new Array();
+  var currencyPairData = new Array();  // will be used to store the actual data.
 
-  currencyPairTableHeader.push(["Name", "Best Bid", "Best Ask Price", "Best Bid Last Changed", "Best Ask Price Last Changed", "Updates"]);
+  var config = {
+    headerData: {
+      name: 'Name',
+      bestBid: 'Best Bid',
+      bestAsk: 'Best Ask Price',
+      lastChangeBid: 'Best Bid Last Changed',
+      lastChangeAsk: 'Best Ask Price Last Changed',
+      updates: 'Updates'
+    }
+  };
+
   //Create a HTML Table element.
   var table = document.createElement("TABLE");
   table.border = "1";
   var sparkLineData = [];
 
   //Get the count of columns.
-  var columnCount = currencyPairTableHeader[0].length;
+  var columnCount = 0;
 
   //Add the header row.
   var row = table.insertRow(-1);
-  for (var i = 0; i < columnCount; i++) {
-      var headerCell = document.createElement("TH");
-      headerCell.innerHTML = currencyPairTableHeader[0][i];
-      row.appendChild(headerCell);
-  }
-
-  setInterval(function() {
-    for (var j = 0; j < currencyPairTable.length; j++) {
-      var midPrice = (currencyPairTable[j].bestBid + currencyPairTable[j].bestAsk) / 2;
-      sparkLineData[j].push(midPrice);
-      console.log(sparkLineData[j]);
-      var rowr = table.getElementsByTagName('tr')[j+1];
-      if (rowr.getElementsByTagName('td')[currencyPairTableHeader[0].length-1]) {
-        rowr.deleteCell(currencyPairTableHeader[0].length-1);
-      }
-      var cell = rowr.insertCell(currencyPairTableHeader[0].length-1);
-      Sparkline.draw(cell, sparkLineData[j]);
-    }
-  }, 30000);
+  Object.keys(config.headerData).forEach(function(k){
+    var headerCell = document.createElement("TH");
+    headerCell.innerHTML = config.headerData[k];
+    row.appendChild(headerCell);
+    columnCount++;
+  });
 
   //Add the data rows.
   function addUpdateRow(data, index) {
     if (index !== -1) {
       table.deleteRow(index);
-      currencyPairTable[index-1] = data;
+      currencyPairData[index-1] = data;
     }
     row = table.insertRow(index);
     Object.keys(data).forEach(function(k){
@@ -76,15 +72,15 @@ function connectCallback() {
 
   function ifDataExist(data) {
     var addData = true;
-    for (var j = 0; j < currencyPairTable.length; j++) {
-      if (data.name == currencyPairTable[j].name) {
+    for (var index = 0; index < currencyPairData.length; index++) {
+      if (data.name == currencyPairData[index].name) {
         addData = false;
-        addUpdateRow(data, j+1);
+        addUpdateRow(data, index+1);
         break;
       }
     }
     if (addData) {
-      currencyPairTable.push(data);
+      currencyPairData.push(data);
       sparkLineData.push([]);
       addUpdateRow(data, -1);
     }
@@ -96,16 +92,28 @@ function connectCallback() {
 
   client.subscribe('/fx/prices', function(data) {
     var message = JSON.parse(data.body);
-    var data = {
-      name: message.name,
-      bestBid: message.bestBid,
-      bestAsk: message.bestAsk,
-      lastChangedBid: message.lastChangeBid,
-      lastChangeAsk: message.lastChangeAsk,
-    };
+    var data = {};
+    Object.keys(config.headerData).forEach(function(key){
+      if (message[key] !== undefined) {
+          data[key] = message[key]
+      }
+    });
     ifDataExist(data);
   });
-  document.getElementById('stomp-status').innerHTML = "It has now successfully connected to a stomp server serving price updates for some foreign exchange currency pairs."
+
+  setInterval(function() {
+    for (var index = 0; index < currencyPairData.length; index++) {
+      var midPrice = (currencyPairData[index].bestBid + currencyPairData[index].bestAsk) / 2;
+      sparkLineData[index].push(midPrice);
+      var dataRow = table.getElementsByTagName('tr')[index+1];
+      if (dataRow.getElementsByTagName('td')[columnCount-1]) {
+          dataRow.deleteCell(columnCount-1);
+      }
+      var cell = dataRow.insertCell(columnCount-1);
+      Sparkline.draw(cell, sparkLineData[index]);
+    }
+  }, 30000);
+
 }
 
 client.connect({}, connectCallback, function(error) {
