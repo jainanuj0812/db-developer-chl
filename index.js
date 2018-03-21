@@ -34,19 +34,24 @@ function connectCallback() {
       bestAsk: 'Best Ask Price',
       lastChangeBid: 'Best Bid Last Changed',
       lastChangeAsk: 'Best Ask Price Last Changed',
-      updates: 'Updates'
-    }
+      updates: 'SparkLine Updates'
+    },
+    sparkLineUpdateTime: 30000
   };
 
   //Create a HTML Table element.
   var table = document.createElement("TABLE");
   table.border = "1";
-  var sparkLineData = [];
+  var dvTable = document.getElementById("data-table");
+  dvTable.innerHTML = "";
+  dvTable.appendChild(table);
 
-  //Get the count of columns.
+  var sparkLineData = []; // will be used as array of arrays containing mid prices for each currency pair.
+
+  // Count for the headers columns.
   var columnCount = 0;
 
-  //Add the header row.
+  // Add the header row.
   var row = table.insertRow(-1);
   Object.keys(config.headerData).forEach(function(k){
     var headerCell = document.createElement("TH");
@@ -55,64 +60,60 @@ function connectCallback() {
     columnCount++;
   });
 
-  //Add the data rows.
-  function addUpdateRow(data, index) {
+  // Add/Updates the data rows.
+  function addUpdateRow(data) {
+    var index = ifDataExist(data); // Check if data exist in the current table,
     if (index !== -1) {
-      table.deleteRow(index);
+      table.deleteRow(index); // If data exist delete the row and will be replaced with the updated one in below code.
       currencyPairData[index-1] = data;
+    } else {
+        currencyPairData.push(data);
+        sparkLineData.push([]); // Add an blank array in sparkline data for this particular row
     }
     row = table.insertRow(index);
-    Object.keys(data).forEach(function(k){
+    Object.keys(data).forEach(function(key){
         var cell = row.insertCell(-1);
-        cell.innerHTML = data[k];
+        cell.innerHTML = data[key];
     });
     var sparkCell = row.insertCell(-1);
     Sparkline.draw(sparkCell, sparkLineData[index-1]);
   }
 
   function ifDataExist(data) {
-    var addData = true;
+    var dataFoundAtIndex = -1;
     for (var index = 0; index < currencyPairData.length; index++) {
       if (data.name == currencyPairData[index].name) {
-        addData = false;
-        addUpdateRow(data, index+1);
+        dataFoundAtIndex = index + 1;
         break;
       }
     }
-    if (addData) {
-      currencyPairData.push(data);
-      sparkLineData.push([]);
-      addUpdateRow(data, -1);
-    }
+    return dataFoundAtIndex;
   }
-  var dvTable = document.getElementById("data-table");
-  dvTable.innerHTML = "";
-  dvTable.appendChild(table);
 
-
-  client.subscribe('/fx/prices', function(data) {
-    var message = JSON.parse(data.body);
+  client.subscribe('/fx/prices', function(message) {
+    var currencyPairs = JSON.parse(message.body);
     var data = {};
     Object.keys(config.headerData).forEach(function(key){
-      if (message[key] !== undefined) {
-          data[key] = message[key]
+      if (currencyPairs[key] !== undefined) {
+          data[key] = currencyPairs[key]
       }
     });
-    ifDataExist(data);
+    addUpdateRow(data);
   });
 
-  setInterval(function() {
+  function updateSparkLine() {
     for (var index = 0; index < currencyPairData.length; index++) {
       var midPrice = (currencyPairData[index].bestBid + currencyPairData[index].bestAsk) / 2;
       sparkLineData[index].push(midPrice);
       var dataRow = table.getElementsByTagName('tr')[index+1];
       if (dataRow.getElementsByTagName('td')[columnCount-1]) {
-          dataRow.deleteCell(columnCount-1);
+        dataRow.deleteCell(columnCount-1);
       }
       var cell = dataRow.insertCell(columnCount-1);
       Sparkline.draw(cell, sparkLineData[index]);
     }
-  }, 30000);
+  }
+  setInterval(updateSparkLine, config.sparkLineUpdateTime);
 
 }
 
