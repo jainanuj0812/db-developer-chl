@@ -73,11 +73,11 @@ function connectCallback() {
     row = table.insertRow(index);
     Object.keys(data).forEach(function(key){
         let cell = row.insertCell(-1);
-        cell.innerHTML = data[key];
+        cell.innerHTML = data[key]; // Copy data to the cells
     });
     let sparkLineCell = row.insertCell(-1);
-    Sparkline.draw(sparkLineCell, sparkLineData[index-1]);
-    sortTable(table, 3);
+    Sparkline.draw(sparkLineCell, sparkLineData[index-1]); // As we have deleted the row, if data exists to still show the spakLine, we are coping the data.
+    sortTable(table, 3);  // Sort table on the basis of lastChangedBid.
   }
 
   function ifDataExist(data) {
@@ -91,6 +91,7 @@ function connectCallback() {
     return dataFoundAtIndex;
   }
 
+  // Subscribing the data
   client.subscribe('/fx/prices', function(message) {
     let currencyPairs = JSON.parse(message.body);
     let data = {};
@@ -114,7 +115,7 @@ function connectCallback() {
       Sparkline.draw(cell, sparkLineData[index]);
     }
   }
-  setInterval(updateSparkLine, config.sparkLineUpdateTime);
+  setInterval(updateSparkLine, config.sparkLineUpdateTime); // Updating the sparkLine after every 30 sec.
 
     function sortTable(table, columnIndex) {
         let rows, switching, i, x, y, shouldSwitch;
