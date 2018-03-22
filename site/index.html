@@ -4,13 +4,22 @@
     This is the library that provides websocket streaming pub/sub
     The dev serverver is serving the html and javascript, but it also provides updating fx data on /fx/prices.
      -->
+    <title>Solution Page</title>
     <script src="stomp.js"></script>
     <script src="sparkline.js"></script>
 </head>
 <body>
 
+<header>
+    <ul class="nav-bar">
+        <li><a class="active" href="">Home</a></li>
+        <li><a href="/aboutme.html">About Me</a></li>
+        <li><a href="/approach.html">Approach</a></li>
+    </ul>
+</header>
+
 <!-- This is a description of what you should do for this task.  You can remove it for your answer -->
-<section class="content">
+<!--<section class="content">
     <h1>Updating Table</h1>
 
     <p>
@@ -163,10 +172,18 @@
         I will be testing in a recent version of chrome, so there's no need to do extra cross browser testing, but I
         may use a mac or windows to do this, so you shouldn't include anything excessively platform specific.
     </p>
-</section>
+</section>-->
 
 
 <div id="data-table">
+</div>
+
+<div class="content">
+  <strong>Notes</strong>
+  <ul>
+    <li>Some assumption are taken while development, Please go through <a href="/approach.html">Approach</a> for more info.</li>
+    <li>Sparkline Updates will make more sense after 1 minute of time as it is getting updated after every 30 secs.</li>
+  </ul>
 </div>
 
 <!-- Code you write in index.js and anything it depends on will be bundled into bundle.js and

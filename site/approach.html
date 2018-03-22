@@ -1,0 +1,47 @@
+<html>
+<head>
+  <title>Approach Page</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<header>
+  <ul class="nav-bar">
+    <li><a href="/">Home</a></li>
+    <li><a href="/aboutme.html">About Me</a></li>
+    <li><a class="active" href="">Approach</a></li>
+  </ul>
+</header>
+<section class="content">
+  <h3>Approach</h3>
+  <ul>
+    <li>Subscribing to the stomp client and make the data available on the browser client side</li>
+    <li>The fields which you want to show in table on UI is configurable in the code.</li>
+    <li>Now on the basis of the data we get from the subscription, checking the data if this data exist in the current table or not.</li>
+    <li>if data exist in the table, deleting the row and adding the new row with the updated data on same index.</li>
+    <li>if data not exist in the table, adding a new row with the data at last.</li>
+    <li>After all the operations, the sorting will run and sort the table on the basis of the lastChangedBid.</li>
+    <li>Again, this sorting is configurable you can change the column according to which you want to sort the table.</li>
+    <li>We are managing the sparkLine data separately, as this is updating after every 30 seconds.</li>
+    <li>Sorting the table also leads to sorting the current data and the sparkLine data on the UI as well.</li>
+  </ul>
+
+  <h3>Assumptions</h3>
+  <ul>
+    <li>Added an interval of 500 ms to throw data from the stomp server, as data coming from stomb server is so fast that it rests on UI for the fraction of second and not readable to user.</li>
+    <li>We can remove the this interval and the code will still run.</li>
+  </ul>
+  <img src="code-snippet.png" width="800">
+  <ul>
+    <li>We are sorting the table (descending) on the basis of the lastChangedBid, means the currency pair with highest lastChangedBid will be at top of the table and lowest at the bottom</li>
+    <li>Round off the values in the table will make more sense, this will make the data more readable. We can do that by parsing the value up to 2 decimals point</li>
+  </ul>
+
+  <h3>Libraries/Frameworks that can be helpful</h3>
+  <p><strong>Stomp.js</strong> is out of date and no longer maintained, we can use alternatives like <a href="https://github.com/JSteunou/webstomp-client">webstomp-client</a>, as this library has more active community. </p>
+  <p>We can use socket.io, which has more advanced feature.</p>
+  <p>Not a part of requirement, but as in my current application I am serving 3 different pages, all coming from server on every hit (assuming no-cache). It will be more productive or will increase the performance
+    if we use framework/libraries like Angular or React and create a SPA (Single Page Application).</p>
+  <p>For sorting the table we can use third party libraries, there are many libraries available over the github which we can use.</p>
+</section>
+</body>
+</html>

@@ -5,107 +5,165 @@
  */
 
 // This is not really required, but means that changes to index.html will cause a reload.
-require('./site/index.html')
+require('./site/index.html');
 // Apply the styles in style.css to the page.
-require('./site/style.css')
+require('./site/style.css');
 
 // if you want to use es6, you can do something like
 //     require('./es6/myEs6code')
 // here to load the myEs6code.js file, and it will be automatically transpiled.
 
 // Change this to get detailed logging from the stomp library
-global.DEBUG = false
+global.DEBUG = false;
 
-const url = "ws://localhost:8011/stomp"
-const client = Stomp.client(url)
+const url = "ws://localhost:8011/stomp";
+const client = Stomp.client(url);
 client.debug = function(msg) {
   if (global.DEBUG) {
     console.info(msg)
   }
-}
+};
 
 function connectCallback() {
-  var currencyPairTable = new Array();
-  var currencyPairTableHeader = new Array();
+  let currencyPairData = new Array();  // will be used to store the actual data.
 
-  currencyPairTableHeader.push(["Name", "Best Bid", "Best Ask Price", "Best Bid Last Changed", "Best Ask Price Last Changed", "Updates"]);
+  let config = {
+    headerData: { // Headers for the data table, you can add new column heading here.
+      name: 'Name',
+      bestBid: 'Best Bid',
+      bestAsk: 'Best Ask Price',
+      lastChangeBid: 'Best Bid Last Changed',
+      lastChangeAsk: 'Best Ask Price Last Changed',
+      updates: 'SparkLine Updates'
+    },
+    sparkLineUpdateTime: 30000 // SparkLine graph update time.
+  };
+
   //Create a HTML Table element.
-  var table = document.createElement("TABLE");
+  let table = document.createElement("TABLE");
   table.border = "1";
-  var sparkLineData = [];
-
-  //Get the count of columns.
-  var columnCount = currencyPairTableHeader[0].length;
-
-  //Add the header row.
-  var row = table.insertRow(-1);
-  for (var i = 0; i < columnCount; i++) {
-      var headerCell = document.createElement("TH");
-      headerCell.innerHTML = currencyPairTableHeader[0][i];
-      row.appendChild(headerCell);
-  }
-
-  setInterval(function() {
-    for (var j = 0; j < currencyPairTable.length; j++) {
-      var midPrice = (currencyPairTable[j].bestBid + currencyPairTable[j].bestAsk) / 2;
-      sparkLineData[j].push(midPrice);
-      console.log(sparkLineData[j]);
-      var rowr = table.getElementsByTagName('tr')[j+1];
-      if (rowr.getElementsByTagName('td')[currencyPairTableHeader[0].length-1]) {
-        rowr.deleteCell(currencyPairTableHeader[0].length-1);
-      }
-      var cell = rowr.insertCell(currencyPairTableHeader[0].length-1);
-      Sparkline.draw(cell, sparkLineData[j]);
-    }
-  }, 30000);
-
-  //Add the data rows.
-  function addUpdateRow(data, index) {
-    if (index !== -1) {
-      table.deleteRow(index);
-      currencyPairTable[index-1] = data;
-    }
-    row = table.insertRow(index);
-    Object.keys(data).forEach(function(k){
-        var cell = row.insertCell(-1);
-        cell.innerHTML = data[k];
-    });
-    var sparkCell = row.insertCell(-1);
-    Sparkline.draw(sparkCell, sparkLineData[index-1]);
-  }
-
-  function ifDataExist(data) {
-    var addData = true;
-    for (var j = 0; j < currencyPairTable.length; j++) {
-      if (data.name == currencyPairTable[j].name) {
-        addData = false;
-        addUpdateRow(data, j+1);
-        break;
-      }
-    }
-    if (addData) {
-      currencyPairTable.push(data);
-      sparkLineData.push([]);
-      addUpdateRow(data, -1);
-    }
-  }
-  var dvTable = document.getElementById("data-table");
+  let dvTable = document.getElementById("data-table");
   dvTable.innerHTML = "";
   dvTable.appendChild(table);
 
+  let sparkLineData = []; // will be used as array of arrays containing mid prices for each currency pair.
 
-  client.subscribe('/fx/prices', function(data) {
-    var message = JSON.parse(data.body);
-    var data = {
-      name: message.name,
-      bestBid: message.bestBid,
-      bestAsk: message.bestAsk,
-      lastChangedBid: message.lastChangeBid,
-      lastChangeAsk: message.lastChangeAsk,
-    };
-    ifDataExist(data);
+  // Count for the headers columns.
+  let columnCount = 0;
+
+  // Add the header row.
+  let row = table.insertRow(-1);
+  Object.keys(config.headerData).forEach(function(k){
+    let headerCell = document.createElement("TH");
+    headerCell.innerHTML = config.headerData[k];
+    row.appendChild(headerCell);
+    columnCount++;
   });
-  document.getElementById('stomp-status').innerHTML = "It has now successfully connected to a stomp server serving price updates for some foreign exchange currency pairs."
+
+  // Add/Updates the data rows.
+  function addUpdateRow(data) {
+    let index = ifDataExist(data); // Check if data exist in the current table,
+    if (index !== -1) {
+      table.deleteRow(index); // If data exist delete the row and will be replaced with the updated one in below code.
+      currencyPairData[index-1] = data;
+    } else {
+      currencyPairData.push(data);
+      sparkLineData.push([]); // Add an blank array in sparkline data for this particular row
+    }
+    row = table.insertRow(index);
+    Object.keys(data).forEach(function(key){
+        let cell = row.insertCell(-1);
+        cell.innerHTML = data[key]; // Copy data to the cells
+    });
+    let sparkLineCell = row.insertCell(-1);
+    Sparkline.draw(sparkLineCell, sparkLineData[index-1]); // As we have deleted the row, if data exists to still show the spakLine, we are coping the data.
+    sortTable(table, 3);  // Sort table on the basis of lastChangedBid.
+  }
+
+  function ifDataExist(data) {
+    let dataFoundAtIndex = -1;
+    for (let index = 0; index < currencyPairData.length; index++) {
+      if (data.name === currencyPairData[index].name) {
+        dataFoundAtIndex = index + 1;  // Data found on this index
+        break;
+      }
+    }
+    return dataFoundAtIndex;
+  }
+
+  // Subscribing the data
+  client.subscribe('/fx/prices', function(message) {
+    let currencyPairs = JSON.parse(message.body);
+    let data = {};
+    Object.keys(config.headerData).forEach(function(key){
+      if (currencyPairs[key] !== undefined) {
+          data[key] = currencyPairs[key]
+      }
+    });
+    addUpdateRow(data);
+  });
+
+  function updateSparkLine() {
+    for (let index = 0; index < currencyPairData.length; index++) {
+      let midPrice = (currencyPairData[index].bestBid + currencyPairData[index].bestAsk) / 2;
+      sparkLineData[index].push(midPrice);
+      let dataRow = table.getElementsByTagName('tr')[index+1];
+      if (dataRow.getElementsByTagName('td')[columnCount-1]) {
+        dataRow.deleteCell(columnCount-1);
+      }
+      let cell = dataRow.insertCell(columnCount-1);
+      Sparkline.draw(cell, sparkLineData[index]);
+    }
+  }
+  setInterval(updateSparkLine, config.sparkLineUpdateTime); // Updating the sparkLine after every 30 sec.
+
+    function sortTable(table, columnIndex) {
+        let rows, switching, i, x, y, shouldSwitch;
+        switching = true;
+        /* Make a loop that will continue until
+        no switching has been done: */
+        while (switching) {
+            // Start by saying: no switching is done:
+            switching = false;
+            rows = table.getElementsByTagName("TR");
+            /* Loop through all table rows (except the
+            first, which contains table headers): */
+            for (i = 1; i < (rows.length - 1); i++) {
+                // Start by saying there should be no switching:
+                shouldSwitch = false;
+                /* Get the two elements you want to compare,
+                one from current row and one from the next: */
+                x = rows[i].getElementsByTagName("TD")[columnIndex];
+                y = rows[i + 1].getElementsByTagName("TD")[columnIndex];
+                // Check if the two rows should switch place:
+                if (parseFloat(x.innerHTML) < parseFloat(y.innerHTML)) {
+                    // I so, mark as a switch and break the loop:
+                    shouldSwitch= true;
+                    break;
+                }
+            }
+            if (shouldSwitch) {
+                let switchData = [];
+                /* If a switch has been marked, make the switch
+                and mark that a switch has been done: */
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+
+                /* If a switch has been marked, make the switch
+                to currencyPairData as well */
+                switchData = currencyPairData[i-1];
+                currencyPairData[i-1] = currencyPairData[i];
+                currencyPairData[i] = switchData;
+
+                /* If a switch has been marked, make the switch
+                to sparkLineData as well */
+                switchData = sparkLineData[i-1];
+                sparkLineData[i-1] = sparkLineData[i];
+                sparkLineData[i] = switchData;
+                switching = true;
+            }
+        }
+    }
+
 }
 
 client.connect({}, connectCallback, function(error) {
