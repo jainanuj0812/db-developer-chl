@@ -13,7 +13,7 @@ describe("Update CurrencyPair Table", function() {
         });
 
         it("should be able to intialize the table", function() {
-            expect(UpdateTableObj.initTable()).toBeDefined();  // Testing of the data table initialize or not
+            expect(UpdateTableObj.initTable()).toBeDefined();  // Testing of the data table initialize
         });
 
         it("should register the sparkline update", function() {
@@ -27,7 +27,7 @@ describe("Update CurrencyPair Table", function() {
 
     });
 
-    describe("creating header", function() {
+    describe("Creating header", function() {
         beforeEach(function() {
             UpdateTableObj = new UpdateTable();
             UpdateTableObj.initTable();
