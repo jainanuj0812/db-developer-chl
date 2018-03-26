@@ -72,3 +72,16 @@ td:nth-child(1) {
 .nav-bar li a.active {
     background-color: #111;
 }
+
+.avatar-box {
+    display: inline-block;
+    width:490px;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.margin-top-50 {
+    margin-top: 50px;
+}
