@@ -8,7 +8,7 @@
 require('./site/index.html');
 // Apply the styles in style.css to the page.
 require('./site/style.css');
-var UpdateCurrencyPairTable = require('./lib/UpdateTable');
+var UpdateCurrencyPairTable = require('./lib/UpdateCurrencyPairTable');
 
 // if you want to use es6, you can do something like
 //     require('./es6/myEs6code')

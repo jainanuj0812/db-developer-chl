@@ -25,14 +25,53 @@
     <li>Sorting the table also leads to sorting the current data and the sparkLine data on the UI as well.</li>
   </ul>
 
+  <h3>Testing with Jasmine</h3>
+  <ul>
+    <li><strong>Jasmine</strong> library is used for the testing the application.</li>
+    <li>You can find the test specs under spec/testing-specs directory.</li>
+    <li>To run the testing suits, checkout to the latest code base and run following command.</li>
+  </ul>
+  <img src="images/npm-install.png" width="800">
+  <img src="images/npm-test.png" width="800">
+  <ul>
+    <li>Added <strong>jsdom</strong> library to test the dom manipulation. Jasmine itself do not run on browser and don't includes any dependencies from browser.
+      So jsdom comes to rescue, help developer to test the dom specific task without running it on browser.</li>
+    <li>There are 6 test suits in total that will run on running <i>npm test</i></li>
+    <li>Mock data is used for testing, defined in the test suites itself.</li>
+    <li>
+      Following are the operations that will be tested by jasmine
+      <ul>
+        <li>
+          Initializing Table
+        </li>
+        <li>
+          Initializing Table Header
+        </li>
+        <li>
+          Sparkline updates runs on 30 sec interval
+        </li>
+        <li>
+          Add/Update data row in the tables
+        </li>
+        <li>
+          Checking if data coming from stomp server is present in the table.
+        </li>
+        <li>
+          Checking if data coming from stomp server is not present in the table.
+        </li>
+      </ul>
+    </li>
+  </ul>
+
   <h3>Assumptions</h3>
   <ul>
     <li>Added an interval of 500 ms to throw data from the stomp server, as data coming from stomb server is so fast that it rests on UI for the fraction of second and not readable to user.</li>
     <li>We can remove the this interval and the code will still run.</li>
   </ul>
-  <img src="code-snippet.png" width="800">
+  <img src="images/code-snippet.png" width="800">
   <ul>
     <li>We are sorting the table (descending) on the basis of the lastChangedBid, means the currency pair with highest lastChangedBid will be at top of the table and lowest at the bottom</li>
+    <li>As the statement for capturing the mid price and update sparkline is little confusing, I have captured the mid price and updated the sparkline on each 30th second (If want to store midp price over last 30 sec, it will be easy to implement in current code base)</li>
     <li>Round off the values in the table will make more sense, this will make the data more readable. We can do that by parsing the value up to 2 decimals point</li>
   </ul>
 

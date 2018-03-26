@@ -1,11 +1,11 @@
-describe("UpdateTable", function() {
-    var UpdateTable= require('../../lib/UpdateTable');
+describe("Update CurrencyPair Table", function() {
+    var UpdateTable= require('../../lib/UpdateCurrencyPairTable');
     var UpdateTableObj;
 
     describe("Creating Table", function() {
         beforeEach(function() {
             UpdateTableObj = new UpdateTable();
-            jasmine.clock().install();
+            jasmine.clock().install(); // Added mock clock to test async methods.
         });
 
         afterEach(function() {
@@ -13,14 +13,14 @@ describe("UpdateTable", function() {
         });
 
         it("should be able to intialize the table", function() {
-            expect(UpdateTableObj.initTable()).toBeDefined();
+            expect(UpdateTableObj.initTable()).toBeDefined();  // Testing of the data table initialize or not
         });
 
         it("should register the sparkline update", function() {
             spyOn(UpdateTableObj, "updateSparkLine");
 
             UpdateTableObj.initTable();
-            jasmine.clock().tick(4000);
+            jasmine.clock().tick(40000);  // updateSparkLine should get called in this time.
 
             expect(UpdateTableObj.updateSparkLine).toHaveBeenCalled();
         });
@@ -34,7 +34,7 @@ describe("UpdateTable", function() {
         });
 
         it("should be able to create header for the table", function() {
-            expect(UpdateTableObj.createHeader()).toBeDefined();
+            expect(UpdateTableObj.createHeader()).toBeDefined(); // Testing header creation of the table
         });
     });
 
@@ -84,8 +84,8 @@ describe("UpdateTable", function() {
                 "lastChangeAsk": -4.862314256927661,
                 "lastChangeBid": -2.8769211401569663
             };
-            Sparkline = jasmine.createSpy();
-            Sparkline.draw = jasmine.createSpy();
+            Sparkline = jasmine.createSpy();   // Ignoring Sparkline
+            Sparkline.draw = jasmine.createSpy(); // Ignoring Sparkline's method draw.
             expect(UpdateTableObj.addUpdateRow(data)).not.toBeLessThan(1);
         });
         it("should be able to check if data exist in current array of currency pair", function() {
